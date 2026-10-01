@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NVD Checker</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <h1>NVD Checker</h1>
+    <h2>Projects</h2>
+    <ul id="project-list" class="project-list"></ul>
+    <form id="new-project-form" class="inline-form">
+      <input id="new-project-name" placeholder="New project name" maxlength="100" required>
+      <button type="submit" title="Create project">+</button>
+    </form>
+  </aside>
+
+  <main>
+    <section id="empty-state" class="card empty">
+      <p>Create a project on the left, then add the trigger words you want to monitor.</p>
+    </section>
+
+    <section id="project-panel" class="card" hidden>
+      <div class="panel-head">
+        <h2 id="project-title"></h2>
+        <div class="actions">
+          <button id="rename-project" class="ghost">Rename</button>
+          <button id="delete-project" class="ghost danger">Delete</button>
+        </div>
+      </div>
+      <h3>Trigger words</h3>
+      <div id="keyword-chips" class="chips"></div>
+      <form id="new-keyword-form" class="inline-form">
+        <input id="new-keyword-term" placeholder="Add a trigger word, e.g. openssl, remote code execution" maxlength="200" required>
+        <label class="check"><input type="checkbox" id="new-keyword-exact"> exact phrase</label>
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
+    <section id="search-panel" class="card" hidden>
+      <div class="controls">
+        <fieldset>
+          <legend>Sources</legend>
+          <div id="source-list" class="sources"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Time range</legend>
+          <select id="window">
+            <option value="24h">Last 24 hours</option>
+            <option value="7d" selected>Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+            <option value="180d">Last 6 months</option>
+            <option value="365d">Last year</option>
+            <option value="custom">Custom…</option>
+          </select>
+          <span id="custom-range" hidden>
+            <input type="date" id="custom-start"> → <input type="date" id="custom-end">
+          </span>
+          <select id="date-field" title="Which date to filter on">
+            <option value="published">by published date</option>
+            <option value="modified">by last-modified date</option>
+          </select>
+        </fieldset>
+        <button id="search-btn" class="primary">Search</button>
+      </div>
+      <p class="hint" id="rate-hint"></p>
+    </section>
+
+    <section id="errors" class="errors" hidden></section>
+
+    <section id="results-panel" class="card" hidden>
+      <div class="summary" id="summary"></div>
+      <div class="keyword-counts" id="keyword-counts"></div>
+      <div class="filters">
+        <input id="text-filter" type="search" placeholder="Filter results…">
+        <select id="severity-filter">
+          <option value="">All severities</option>
+          <option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option>
+          <option>LOW</option><option>NONE</option><option>UNKNOWN</option>
+        </select>
+        <button id="export-btn" class="ghost">Export CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-sort="id">ID</th>
+              <th data-sort="severity">Severity</th>
+              <th data-sort="cvss_score">Score</th>
+              <th data-sort="published">Published</th>
+              <th>Matched</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

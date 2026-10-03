@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · NVD Checker · TEXA</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="login-page">
+  <div class="aurora" aria-hidden="true">
+    <span class="orb orb-1"></span><span class="orb orb-2"></span><span class="orb orb-3"></span>
+  </div>
+  <main class="login-shell">
+    <img class="login-logo" src="/static/brand/texa-logo-white.svg" alt="TEXA" width="240" height="49">
+    <form id="login-form" class="login-card">
+      <div>
+        <h1>NVD Checker</h1>
+        <p class="text-muted">Sign in to monitor vulnerabilities for your projects.</p>
+      </div>
+      <label class="field-label">Username <input id="username" autocomplete="username" required autofocus></label>
+      <label class="field-label">Password <input id="password" type="password" autocomplete="current-password" required></label>
+      <div id="login-error" class="alert" role="alert" hidden></div>
+      <button type="submit" class="primary">Sign in</button>
+    </form>
+    <p class="login-foot">Internal tool · data from the U.S. National Vulnerability Database</p>
+  </main>
+  <script src="/static/login.js"></script>
+</body>
+</html>

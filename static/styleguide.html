@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Design system · NVD Checker · TEXA</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/styleguide.css">
+</head>
+<body>
+<div class="sg">
+  <header class="sg-hero">
+    <div class="aurora" aria-hidden="true"><span class="orb orb-1"></span><span class="orb orb-2"></span></div>
+    <img src="/static/brand/texa-logo-white.svg" alt="TEXA" width="260" height="53">
+    <p>Design system for NVD Checker. Every value on this page comes from <code>static/css/tokens.css</code>, and the components come from <code>components.css</code>. What you see here is what ships.</p>
+  </header>
+
+  <section>
+    <h2>Logo</h2>
+    <div class="sg-logos">
+      <div class="card on-navy"><img src="/static/brand/texa-logo-white.svg" alt="TEXA white" width="200" height="41"></div>
+      <div class="card"><img src="/static/brand/texa-logo-navy.svg" alt="TEXA navy" width="200" height="41"></div>
+      <div class="card"><img src="/static/favicon.svg" alt="App mark" width="72" height="72"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Colour</h2>
+    <h3>Brand navy scale: #012168 is sampled from the logo</h3>
+    <div class="sg-grid">
+      <div class="swatch"><i class="sw-navy-950"></i><span>navy-950<br><code>#000c2b</code></span></div>
+      <div class="swatch"><i class="sw-navy-900"></i><span>navy-900<br><code>#011446</code></span></div>
+      <div class="swatch"><i class="sw-navy"></i><span><b>navy</b> (primary)<br><code>#012168</code></span></div>
+      <div class="swatch"><i class="sw-navy-700"></i><span>navy-700<br><code>#0a2f8a</code></span></div>
+      <div class="swatch"><i class="sw-navy-600"></i><span>navy-600<br><code>#1543b0</code></span></div>
+      <div class="swatch"><i class="sw-navy-500"></i><span>navy-500<br><code>#2a5bd7</code></span></div>
+      <div class="swatch"><i class="sw-navy-400"></i><span>navy-400<br><code>#5a85ea</code></span></div>
+      <div class="swatch"><i class="sw-navy-300"></i><span>navy-300<br><code>#93b0f4</code></span></div>
+      <div class="swatch"><i class="sw-navy-200"></i><span>navy-200<br><code>#c4d4fa</code></span></div>
+      <div class="swatch"><i class="sw-navy-100"></i><span>navy-100<br><code>#e6edfd</code></span></div>
+      <div class="swatch"><i class="sw-navy-50"></i><span>navy-50<br><code>#f3f6fe</code></span></div>
+    </div>
+    <h3>Accent: cyan (only for gradients, focus and highlights)</h3>
+    <div class="sg-grid">
+      <div class="swatch"><i class="sw-cyan"></i><span>cyan<br><code>#00a3e0</code></span></div>
+      <div class="swatch"><i class="sw-cyan-300"></i><span>cyan-300<br><code>#6fd3ff</code></span></div>
+    </div>
+    <h3>Neutrals</h3>
+    <div class="sg-grid">
+      <div class="swatch"><i class="sw-gray-900"></i><span>gray-900<br><code>#0f1830</code></span></div>
+      <div class="swatch"><i class="sw-gray-700"></i><span>gray-700<br><code>#3a4560</code></span></div>
+      <div class="swatch"><i class="sw-gray-500"></i><span>gray-500<br><code>#67708a</code></span></div>
+      <div class="swatch"><i class="sw-gray-300"></i><span>gray-300<br><code>#c9cfdd</code></span></div>
+      <div class="swatch"><i class="sw-gray-100"></i><span>gray-100<br><code>#eef1f7</code></span></div>
+    </div>
+    <h3>Severity (CVSS): critical black · high red · medium orange · low yellow. All text pairs pass WCAG AA</h3>
+    <div class="sg-grid">
+      <div class="swatch"><i class="sw-sev-critical"></i><span>critical (black)<br><code>#111111</code> · white text</span></div>
+      <div class="swatch"><i class="sw-sev-high"></i><span>high (red)<br><code>#d62828</code> · white text</span></div>
+      <div class="swatch"><i class="sw-sev-medium"></i><span>medium / moderate (orange)<br><code>#f97316</code> · dark text</span></div>
+      <div class="swatch"><i class="sw-sev-low"></i><span>low (yellow)<br><code>#facc15</code> · dark text</span></div>
+      <div class="swatch"><i class="sw-sev-none"></i><span>none / unknown (grey)<br><code>#5f6880</code> · white text</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gradients</h2>
+    <div class="sg-grid sg-grads">
+      <div class="grad grad-brand">--gradient-brand</div>
+      <div class="grad grad-animated">--gradient-brand-animated</div>
+      <div class="grad grad-text"><span class="gradient-text">.gradient-text</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Typography</h2>
+    <p class="text-muted">Display: <b>Bitter</b>, a bracketed slab serif that echoes the Clarendon-style TEXA wordmark. UI: <b>Inter</b>. Both are self-hosted under the SIL Open Font License.</p>
+    <div class="type-row"><code>3xl · display 800</code><span class="t-3xl">1,284 CVEs</span></div>
+    <div class="type-row"><code>2xl · display 700</code><span class="t-2xl">Vulnerability watch</span></div>
+    <div class="type-row"><code>xl · display 700</code><span class="t-xl">Trigger words</span></div>
+    <div class="type-row"><code>lg · body 600</code><span class="t-lg">Emphasised body text</span></div>
+    <div class="type-row"><code>md · body 400</code><span class="t-md">Default body text for tables, forms and descriptions.</span></div>
+    <div class="type-row"><code>sm · body muted</code><span class="t-sm">Secondary and helper text.</span></div>
+    <div class="type-row"><code>eyebrow</code><span class="eyebrow">Section label</span></div>
+  </section>
+
+  <section>
+    <h2>Components</h2>
+    <h3>Buttons</h3>
+    <div class="sg-row">
+      <button class="primary">Primary</button>
+      <button class="primary is-loading">Loading</button>
+      <button>Secondary</button>
+      <button class="ghost">Ghost</button>
+      <button class="ghost danger">Danger</button>
+      <button class="primary" disabled>Disabled</button>
+    </div>
+    <h3>Fields</h3>
+    <div class="sg-row">
+      <input placeholder="Text input">
+      <select><option>Last 7 days</option></select>
+      <label class="check"><input type="checkbox" checked> Checkbox</label>
+    </div>
+    <h3>Chips &amp; tags</h3>
+    <div class="chips">
+      <span class="chip is-new">openssl <button aria-label="Remove">×</button></span>
+      <span class="chip is-new">remote code execution <span class="exact">exact</span> <button aria-label="Remove">×</button></span>
+      <span class="tag">nginx · <b>4</b></span>
+      <span class="tag mono">CWE-79</span>
+    </div>
+    <h3>Severity badges</h3>
+    <div class="sg-row">
+      <span class="sev sev-CRITICAL">CRITICAL</span><span class="sev sev-HIGH">HIGH</span><span class="sev sev-MEDIUM">MEDIUM</span>
+      <span class="sev sev-LOW">LOW</span><span class="sev sev-UNKNOWN">UNKNOWN</span>
+    </div>
+    <h3>Stat tiles</h3>
+    <div class="stats">
+      <div class="stat total"><div class="value">42</div><div class="label">Total</div></div>
+      <div class="stat sev-tile-CRITICAL"><div class="value">3</div><div class="label">critical</div></div>
+      <div class="stat sev-tile-HIGH"><div class="value">11</div><div class="label">high</div></div>
+      <div class="stat sev-tile-MEDIUM"><div class="value">20</div><div class="label">medium</div></div>
+      <div class="stat sev-tile-LOW"><div class="value">8</div><div class="label">low</div></div>
+    </div>
+    <h3>Alert</h3>
+    <div class="alert">nvd / "openssl": HTTP 503: service unavailable</div>
+    <h3>Card</h3>
+    <div class="card accent-top"><div class="card-head"><h2>Card title</h2><span class="text-muted">meta</span></div><p class="text-muted">Cards group a task. Use <code>.accent-top</code> for the primary card on a page.</p></div>
+    <h3>Table &amp; skeleton</h3>
+    <div class="table-wrap sg-table">
+      <table>
+        <thead><tr><th data-sort="id" class="desc">ID</th><th>Severity</th><th>Score</th></tr></thead>
+        <tbody>
+          <tr class="row-in"><td class="id"><a href="#">CVE-2026-41001</a></td><td><span class="sev sev-CRITICAL">CRITICAL</span></td><td class="score">9.8</td></tr>
+          <tr class="row-in"><td class="id"><a href="#">CVE-2026-40877</a></td><td><span class="sev sev-HIGH">HIGH</span></td><td class="score">8.1</td></tr>
+          <tr><td><span class="skeleton w-80"></span></td><td><span class="skeleton w-60"></span></td><td><span class="skeleton w-40"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Motion</h2>
+    <p class="text-muted">Hover a card to preview. Everything is disabled when the OS asks for reduced motion.</p>
+    <div class="motion-demo">
+      <div class="card"><div class="ball m-out"></div><b>ease-out · 500ms</b><br><span class="text-muted">entrances (rise-in)</span></div>
+      <div class="card"><div class="ball m-spring"></div><b>ease-spring</b><br><span class="text-muted">chips (pop-in)</span></div>
+      <div class="card"><div class="ball m-float"></div><b>float · ambient</b><br><span class="text-muted">background orbs</span></div>
+      <div class="card"><div class="ball m-pulse"></div><b>critical-pulse</b><br><span class="text-muted">critical badge</span></div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

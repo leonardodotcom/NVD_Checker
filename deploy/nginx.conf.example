@@ -1,0 +1,31 @@
+# nginx site for NVD Checker (non-Docker setup).
+# Copy to /etc/nginx/sites-available/nvd-checker (Debian/Ubuntu) or /etc/nginx/conf.d/nvd-checker.conf (RHEL)
+# and replace the server_name and certificate paths.
+
+server {
+    listen 80;
+    server_name nvd-checker.example.local;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name nvd-checker.example.local;
+
+    ssl_certificate     /etc/nginx/certs/nvd-checker.crt;
+    ssl_certificate_key /etc/nginx/certs/nvd-checker.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    server_tokens off;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Long keyword lists against NVD can take a while without an API key
+        proxy_read_timeout 300s;
+    }
+}

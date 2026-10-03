@@ -1,0 +1,45 @@
+services:
+  app:
+    build:
+      context: .
+      # Uncomment if your network inspects TLS (see DEPLOY.md, "Corporate proxy"):
+      # secrets:
+      #   - corp_ca
+    image: nvd-checker:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_PATH: /data/nvd_checker.db
+    volumes:
+      - app-data:/data
+      - ./certs:/certs:ro
+    # Not published on the host: only reachable through the caddy service.
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+      CADDY_TLS: ${CADDY_TLS:-internal}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  app-data:
+  caddy-data:
+  caddy-config:
+
+# Uncomment together with the build secret above:
+# secrets:
+#   corp_ca:
+#     file: ./certs/company-ca.pem

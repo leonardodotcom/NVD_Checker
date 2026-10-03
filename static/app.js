@@ -8,6 +8,8 @@ const state = {
   results: [],
   sort: { key: "published", dir: "desc" },
   lastRequest: null,
+  seenKeywords: new Set(),
+  animateRows: false,
 };
 
 function esc(s) {
@@ -23,6 +25,10 @@ async function api(path, options = {}) {
     ...options,
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
+  if (res.status === 401) {
+    window.location.href = "/login";
+    throw new Error("Session expired, please sign in again");
+  }
   if (!res.ok) {
     let detail = res.statusText;
     try { detail = (await res.json()).detail ?? detail; } catch {}
@@ -33,7 +39,7 @@ async function api(path, options = {}) {
 
 function showErrors(messages) {
   const box = $("#errors");
-  box.innerHTML = messages.map((m) => `<div class="error">${esc(m)}</div>`).join("");
+  box.innerHTML = messages.map((m) => `<div class="alert" role="alert">${esc(m)}</div>`).join("");
   box.hidden = messages.length === 0;
 }
 
@@ -58,26 +64,45 @@ function selectProject(id) {
   render();
 }
 
+function setTitle(text) {
+  const el = $("#project-title");
+  if (el.textContent === text) return;
+  el.textContent = text;
+  el.style.animation = "none";   // replay the title entrance
+  void el.offsetWidth;
+  el.style.animation = "";
+}
+
 function render() {
   const list = $("#project-list");
   list.innerHTML = state.projects
-    .map((p) => `<li data-id="${p.id}" class="${p.id === state.currentId ? "active" : ""}">
-        <span>${esc(p.name)}</span><span class="count">${p.keywords.length}</span></li>`)
+    .map((p) => `<li data-id="${p.id}" tabindex="0" class="${p.id === state.currentId ? "active" : ""}"
+        ${p.id === state.currentId ? 'aria-current="page"' : ""}>
+        <span class="name">${esc(p.name)}</span><span class="count">${p.keywords.length}</span></li>`)
     .join("");
-  list.querySelectorAll("li").forEach((li) => li.addEventListener("click", () => selectProject(Number(li.dataset.id))));
+  list.querySelectorAll("li").forEach((li) => {
+    const open = () => selectProject(Number(li.dataset.id));
+    li.addEventListener("click", open);
+    li.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+  });
 
   const p = current();
   $("#empty-state").hidden = !!p;
   $("#project-panel").hidden = !p;
   $("#search-panel").hidden = !p;
+  $("#project-actions").hidden = !p;
+  setTitle(p ? p.name : "Welcome");
   if (!p) return;
 
-  $("#project-title").textContent = p.name;
+  $("#keyword-count").textContent = `${p.keywords.length} word${p.keywords.length === 1 ? "" : "s"}`;
   const chips = $("#keyword-chips");
+  const firstPaint = state.seenKeywords.size === 0;
   chips.innerHTML = p.keywords.length
-    ? p.keywords.map((k) => `<span class="chip">${esc(k.term)}${k.exact_match ? ' <span class="exact">exact</span>' : ""}
-        <button data-kid="${k.id}" title="Remove">×</button></span>`).join("")
-    : '<span class="none">No trigger words yet.</span>';
+    ? p.keywords.map((k) => `<span class="chip${!firstPaint && !state.seenKeywords.has(k.id) ? " is-new" : ""}">${esc(k.term)}${k.exact_match ? ' <span class="exact">exact</span>' : ""}
+        <button data-kid="${k.id}" title="Remove" aria-label="Remove ${esc(k.term)}">×</button></span>`).join("")
+    : '<span class="none">No trigger words yet — add the first one below.</span>';
+  state.seenKeywords = new Set(state.projects.flatMap((proj) => proj.keywords.map((k) => k.id)));
+  if (state.seenKeywords.size === 0) state.seenKeywords.add(-1);
   chips.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => removeKeyword(Number(b.dataset.kid))));
   $("#search-btn").disabled = p.keywords.length === 0;
 }
@@ -171,7 +196,9 @@ $("#search-btn").addEventListener("click", async () => {
   const btn = $("#search-btn");
   const req = buildRequest();
   btn.disabled = true;
+  btn.classList.add("is-loading");
   btn.textContent = "Searching…";
+  showSkeleton();
   $("#rate-hint").textContent = "NVD is rate-limited; large keyword lists or long ranges can take a while.";
   showErrors([]);
   try {
@@ -179,27 +206,59 @@ $("#search-btn").addEventListener("click", async () => {
     state.lastRequest = req;
     state.results = data.results;
     renderSummary(data);
+    state.animateRows = true;
     renderResults();
+    state.animateRows = false;
     $("#results-panel").hidden = false;
     showErrors(data.errors.map((e) => `${e.source}${e.keyword ? ` / "${e.keyword}"` : ""}: ${e.message}`));
   } catch (err) {
+    $("#results-panel").hidden = true;
     showErrors([err.message]);
   } finally {
     btn.disabled = false;
+    btn.classList.remove("is-loading");
     btn.textContent = "Search";
     $("#rate-hint").textContent = "";
   }
 });
 
+function showSkeleton() {
+  const panel = $("#results-panel");
+  panel.hidden = false;
+  $("#results-range").textContent = "Searching…";
+  $("#summary").innerHTML = Array.from({ length: 4 }, () =>
+    '<div class="stat"><span class="skeleton w-40"></span><br><span class="skeleton w-80"></span></div>').join("");
+  $("#keyword-counts").innerHTML = "";
+  const widths = ["w-60", "w-40", "w-40", "w-60", "w-80", "w-100"];
+  $("#results-body").innerHTML = Array.from({ length: 6 }, () =>
+    `<tr>${widths.map((w) => `<td><span class="skeleton ${w}"></span></td>`).join("")}</tr>`).join("");
+}
+
+function countUp(el, target) {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || target === 0) { el.textContent = target; return; }
+  const duration = 700;
+  const start = performance.now();
+  const tick = (now) => {
+    const t = Math.min(1, (now - start) / duration);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3)));
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
 function renderSummary(data) {
   const fmt = (d) => new Date(d).toLocaleDateString();
-  $("#summary").innerHTML =
-    `<span class="total">${data.total} result${data.total === 1 ? "" : "s"}</span>` +
+  $("#results-range").textContent = `${fmt(data.start)} – ${fmt(data.end)}`;
+  const tiles = [{ cls: "total", label: "Total", value: data.total }].concat(
     SEVERITIES.filter((s) => data.counts_by_severity[s])
-      .map((s) => `<span class="sev sev-${s}">${s} ${data.counts_by_severity[s]}</span>`).join(" ") +
-    ` <span class="hint">${fmt(data.start)} – ${fmt(data.end)}</span>`;
+      .map((s) => ({ cls: `sev-tile-${s}`, label: s.toLowerCase(), value: data.counts_by_severity[s] })));
+  $("#summary").innerHTML = tiles
+    .map((t) => `<div class="stat ${t.cls}"><div class="value" data-value="${t.value}">0</div><div class="label">${esc(t.label)}</div></div>`)
+    .join("");
+  $("#summary").querySelectorAll(".value").forEach((el) => countUp(el, Number(el.dataset.value)));
   $("#keyword-counts").innerHTML = Object.entries(data.counts_by_keyword)
-    .map(([k, n]) => `<span>${esc(k)}: <b>${n}</b></span>`).join("");
+    .map(([k, n]) => `<span class="tag">${esc(k)} · <b>${n}</b></span>`).join("");
 }
 
 function sortValue(v, key) {
@@ -228,16 +287,16 @@ function renderResults() {
   });
 
   $("#results-body").innerHTML = rows.length
-    ? rows.map((v) => `<tr>
+    ? rows.map((v) => `<tr${state.animateRows ? ' class="row-in"' : ""}>
         <td class="id"><a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.id)}</a></td>
         <td><span class="sev sev-${esc(v.severity)}">${esc(v.severity)}</span></td>
-        <td class="nowrap">${v.cvss_score ?? "–"}${v.cvss_version ? ` <span class="hint">v${esc(v.cvss_version)}</span>` : ""}</td>
+        <td class="nowrap"><span class="score">${v.cvss_score ?? "–"}</span>${v.cvss_version ? ` <span class="text-muted">v${esc(v.cvss_version)}</span>` : ""}</td>
         <td class="nowrap">${v.published ? new Date(v.published).toLocaleDateString() : "–"}</td>
         <td>${v.matched_keywords.map((k) => `<span class="tag">${esc(k)}</span>`).join("")}</td>
         <td class="desc"><div class="text" title="Click to expand">${esc(v.description)}</div>
-          ${v.cwe.map((c) => `<span class="tag">${esc(c)}</span>`).join("")}</td>
+          ${v.cwe.map((c) => `<span class="tag mono">${esc(c)}</span>`).join("")}</td>
       </tr>`).join("")
-    : `<tr><td colspan="6" class="hint">No results match.</td></tr>`;
+    : `<tr class="empty-row"><td colspan="6">No vulnerabilities match — try a longer time range or more trigger words.</td></tr>`;
 }
 
 document.querySelectorAll("th[data-sort]").forEach((th) => th.addEventListener("click", () => {
@@ -263,4 +322,15 @@ $("#export-btn").addEventListener("click", async () => {
   } catch (err) { showErrors([err.message]); }
 });
 
-loadSources().then(loadProjects).catch((err) => showErrors([err.message]));
+$("#logout-btn").addEventListener("click", async () => {
+  await fetch("/api/logout", { method: "POST" });
+  window.location.href = "/login";
+});
+
+async function loadUser() {
+  const { user } = await (await api("/api/me")).json();
+  $("#current-user").textContent = user;
+  $("#user-avatar").textContent = user.slice(0, 1);
+}
+
+loadUser().then(loadSources).then(loadProjects).catch((err) => showErrors([err.message]));

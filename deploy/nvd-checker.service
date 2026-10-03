@@ -1,0 +1,29 @@
+# systemd unit for running NVD Checker without Docker.
+# Install: sudo cp deploy/nvd-checker.service /etc/systemd/system/
+#          sudo systemctl daemon-reload && sudo systemctl enable --now nvd-checker
+[Unit]
+Description=NVD Checker web app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nvdchecker
+Group=nvdchecker
+WorkingDirectory=/opt/nvd-checker
+EnvironmentFile=/etc/nvd-checker/nvd-checker.env
+# Exactly one worker: the NVD rate limiter and result cache live in process memory.
+# Bound to localhost only; nginx terminates HTTPS in front of it.
+ExecStart=/opt/nvd-checker/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/nvd-checker
+
+[Install]
+WantedBy=multi-user.target

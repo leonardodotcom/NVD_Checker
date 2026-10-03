@@ -75,7 +75,7 @@ body.app {
   text-transform: uppercase;
   color: rgba(255, 255, 255, .6);
 }
-.project-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.project-list { list-style: none; margin: 0; padding: 2px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
 .project-list li {
   position: relative;
   display: flex;
@@ -86,9 +86,9 @@ body.app {
   border-radius: var(--radius-sm);
   cursor: pointer;
   color: rgba(255, 255, 255, .85);
-  transition: background-color var(--duration-base) var(--ease-out), color var(--duration-base), transform var(--duration-base) var(--ease-out);
+  transition: background-color var(--duration-base) var(--ease-out), color var(--duration-base);
 }
-.project-list li:hover { background: rgba(255, 255, 255, .08); color: #fff; transform: translateX(2px); }
+.project-list li:hover { background: rgba(255, 255, 255, .08); color: #fff; }
 .project-list li:focus-visible { box-shadow: 0 0 0 2px rgba(255, 255, 255, .6); }
 .project-list li.active {
   background: rgba(255, 255, 255, .14);
@@ -106,7 +106,57 @@ body.app {
   background: var(--texa-cyan-300);
   box-shadow: 0 0 10px var(--texa-cyan);
 }
-.project-list .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-list .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.project-list .meta { flex: none; display: flex; align-items: center; gap: var(--space-1); }
+
+/* ⋯ project menu trigger: revealed on hover, focus, or for the active project */
+.project-list .more {
+  --btn-bg: transparent;
+  --btn-fg: #fff;
+  --btn-border: transparent;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transition: opacity var(--duration-fast), background-color var(--duration-fast);
+}
+.project-list li:hover .more,
+.project-list li:focus-within .more,
+.project-list li.active .more,
+.project-list .more[aria-expanded="true"] { opacity: 1; }
+.project-list .more:hover:not(:disabled),
+.project-list .more[aria-expanded="true"] { --btn-bg: rgba(255, 255, 255, .18); border-color: transparent; box-shadow: none; }
+.project-list .more:focus-visible { box-shadow: 0 0 0 2px rgba(255, 255, 255, .7); }
+@media (hover: none) { .project-list .more { opacity: 1; } }
+
+/* ---------- Popover menu ---------- */
+.menu {
+  position: fixed;
+  z-index: 50;
+  min-width: 168px;
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-lg);
+  transform-origin: top left;
+  animation: menu-in var(--duration-base) var(--ease-out) both;
+}
+.menu button {
+  --btn-bg: transparent;
+  --btn-border: transparent;
+  width: 100%;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  padding: 8px 10px;
+  font-weight: var(--weight-medium);
+}
+.menu button:hover:not(:disabled), .menu button:focus-visible { --btn-bg: var(--color-surface-muted); border-color: transparent; box-shadow: none; }
+.menu button.danger { --btn-fg: var(--color-danger); }
+.menu button.danger:hover:not(:disabled) { --btn-bg: var(--color-danger-soft); }
+@keyframes menu-in { from { opacity: 0; transform: scale(.96) translateY(-4px); } to { opacity: 1; transform: none; } }
 .project-list .count {
   flex: none;
   min-width: 22px;
@@ -160,6 +210,24 @@ body.app {
 .account-text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-label { font-size: 11px; color: rgba(255, 255, 255, .6); }
 
+/* Theme toggle: moon in light mode, sun in dark mode */
+.theme-toggle .icon-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+.theme-toggle svg { transition: transform var(--duration-slow) var(--ease-spring); }
+.theme-toggle:hover svg { transform: rotate(-20deg); }
+.login-theme-toggle {
+  --btn-bg: rgba(255, 255, 255, .12);
+  --btn-fg: #fff;
+  --btn-border: rgba(255, 255, 255, .25);
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 2;
+  backdrop-filter: blur(8px);
+}
+.login-theme-toggle:hover:not(:disabled) { --btn-bg: rgba(255, 255, 255, .22); border-color: rgba(255, 255, 255, .45); }
+
 /* ---------- Main content ---------- */
 .content {
   width: 100%;
@@ -180,7 +248,7 @@ body.app {
 .empty { text-align: center; padding: var(--space-12) var(--space-6); }
 .empty h2 { font-size: var(--text-xl); margin: var(--space-4) 0 var(--space-2); }
 .empty p { max-width: 420px; margin: 0 auto; }
-.empty-mark { border-radius: var(--radius-md); box-shadow: var(--shadow-glow); animation: float 8s var(--ease-in-out) infinite; }
+.empty-mark { border-radius: var(--radius-md); box-shadow: var(--shadow-glow); }
 
 #keyword-chips { margin-bottom: var(--space-4); min-height: 30px; }
 #keyword-chips .none { color: var(--color-text-muted); }

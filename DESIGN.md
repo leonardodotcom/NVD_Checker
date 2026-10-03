@@ -37,7 +37,7 @@ only as a last resort add page-specific CSS. **Never hard-code a colour, size or
 | Accent | `--texa-cyan`, `--texa-cyan-300` | gradients, focus, highlights |
 | Neutrals | `--gray-900 … --gray-50` | text and surfaces (navy-tinted) |
 | Severity | `--sev-critical/high/medium/low/none` + matching `--sev-*-text` | CVSS badges and stat tiles only (see below) |
-| Semantic | `--color-bg`, `--color-surface`, `--color-text`, `--color-text-muted`, `--color-primary`, `--color-link`, `--color-border`, `--color-danger`, `--color-focus` … | **what components use**; these switch automatically in dark mode |
+| Semantic | `--color-bg`, `--color-surface`, `--color-text`, `--color-text-muted`, `--color-primary`, `--color-link`, `--color-border`, `--color-danger`, `--color-focus` … | **what components use**; these are redefined for the dark theme |
 
 Components reference **semantic** tokens (`--color-surface`), not palette tokens (`--gray-50`). That is what
 makes dark mode a pure token swap.
@@ -97,7 +97,9 @@ Scale: `--text-xs` 12 · `--text-sm` 13 · `--text-md` 14 (body) · `--text-lg` 
 | Component | Class | Notes |
 | --- | --- | --- |
 | Button | `button`, `.primary`, `.ghost`, `.danger`, `.icon`, `.is-loading` | primary = gradient + sheen; `.is-loading` adds a spinner |
-| Field | `input`, `select`, `.field-label`, `.check`, `.inline-form` | cyan focus ring |
+| Field | `input`, `select`, `.field-label`, `.check`, `.inline-form` | cyan focus ring; selects use a custom chevron (`static/icons/`) with 38 px right padding |
+| Menu | `.menu` + `button[role=menuitem]` | popover (project ⋯ actions); closes on outside click / Esc, arrow keys move focus |
+| Theme toggle | `button[data-theme-toggle]` | moon in light mode, sun in dark mode; wired up by `theme.js` |
 | Card | `.card`, `.card.accent-top`, `.card-head` | `accent-top` = gradient bar, for the main card on a page |
 | Chip | `.chip`, `.chip .exact`, `.chip.is-new` | trigger words; `is-new` pops in |
 | Tag | `.tag`, `.tag.mono` | matched keywords, CWE ids |
@@ -136,13 +138,25 @@ checks it in JS.
 
 ## Dark mode
 
-Dark mode follows the operating system (`prefers-color-scheme`). The semantic tokens are redefined to deep-navy
-surfaces (`#050b1f` / `#0b1534`), while the brand sidebar and gradients stay the same in both themes.
+Users switch themes with the moon/sun toggle: in the sidebar next to *Log out*, and at the top-right of the login
+page. The choice is saved in the browser (`localStorage`). Until someone picks one, the app follows the operating
+system setting, and updates live if that changes.
+
+How it works:
+
+- `static/theme.js` is loaded **synchronously in `<head>`**. Before first paint it sets `<html data-theme="light|dark">`,
+  so the page never flashes the wrong theme.
+- `tokens.css` redefines the semantic tokens under `:root[data-theme="dark"]` (deep-navy surfaces `#050b1f` /
+  `#0b1534`). The brand sidebar and gradients stay the same in both themes.
+- While toggling, a short `theme-switching` class cross-fades colours (300 ms).
+- To make a new page theme-aware, include `<script src="/static/theme.js"></script>` in its `<head>` and add a
+  `button[data-theme-toggle]` wherever the toggle should appear.
 
 ## Accessibility checklist
 
-- All interactive elements are reachable by keyboard: project items accept Enter/Space, and the focus ring is
-  always visible.
+- All interactive elements are reachable by keyboard: project items accept Enter/Space, the ⋯ menu opens with
+  Enter, arrow keys move between its items, and Esc closes it and returns focus. The focus ring is always visible.
+- Hover states never shift layout (no translate on list items), so nothing gets clipped by scroll containers.
 - Icon-only buttons have an `aria-label`.
 - Errors use `role="alert"`.
 - Colour is never the only signal: severity badges also carry their text label.

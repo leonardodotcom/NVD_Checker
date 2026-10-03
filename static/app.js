@@ -78,19 +78,32 @@ function render() {
   list.innerHTML = state.projects
     .map((p) => `<li data-id="${p.id}" tabindex="0" class="${p.id === state.currentId ? "active" : ""}"
         ${p.id === state.currentId ? 'aria-current="page"' : ""}>
-        <span class="name">${esc(p.name)}</span><span class="count">${p.keywords.length}</span></li>`)
+        <span class="name">${esc(p.name)}</span>
+        <span class="meta">
+          <span class="count" title="${p.keywords.length} trigger word${p.keywords.length === 1 ? "" : "s"}">${p.keywords.length}</span>
+          <button type="button" class="more" aria-haspopup="menu" aria-expanded="false"
+            aria-label="Actions for ${esc(p.name)}" title="Project actions">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+          </button>
+        </span></li>`)
     .join("");
   list.querySelectorAll("li").forEach((li) => {
-    const open = () => selectProject(Number(li.dataset.id));
-    li.addEventListener("click", open);
-    li.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+    const id = Number(li.dataset.id);
+    li.addEventListener("click", () => selectProject(id));
+    li.addEventListener("keydown", (e) => {
+      if (e.target !== li) return; // keys on the ⋯ button are handled by the button
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectProject(id); }
+    });
+    li.querySelector(".more").addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleProjectMenu(id, e.currentTarget);
+    });
   });
 
   const p = current();
   $("#empty-state").hidden = !!p;
   $("#project-panel").hidden = !p;
   $("#search-panel").hidden = !p;
-  $("#project-actions").hidden = !p;
   setTitle(p ? p.name : "Welcome");
   if (!p) return;
 
@@ -119,26 +132,84 @@ $("#new-project-form").addEventListener("submit", async (e) => {
   } catch (err) { showErrors([err.message]); }
 });
 
-$("#rename-project").addEventListener("click", async () => {
-  const p = current();
+// ---------- project ⋯ menu ----------
+const menu = { el: $("#project-menu"), projectId: null, trigger: null };
+
+function toggleProjectMenu(projectId, trigger) {
+  if (!menu.el.hidden && menu.projectId === projectId) return closeProjectMenu();
+  closeProjectMenu();
+  menu.projectId = projectId;
+  menu.trigger = trigger;
+  trigger.setAttribute("aria-expanded", "true");
+  menu.el.hidden = false;
+  const r = trigger.getBoundingClientRect();
+  const width = menu.el.offsetWidth;
+  const left = Math.min(r.left, window.innerWidth - width - 8);
+  const below = r.bottom + 6 + menu.el.offsetHeight < window.innerHeight;
+  menu.el.style.left = `${Math.max(8, left)}px`;
+  menu.el.style.top = below ? `${r.bottom + 6}px` : `${r.top - menu.el.offsetHeight - 6}px`;
+  menu.el.querySelector("button").focus();
+}
+
+function closeProjectMenu({ restoreFocus = false } = {}) {
+  if (menu.el.hidden) return;
+  menu.el.hidden = true;
+  const trigger = menu.trigger;
+  menu.trigger?.setAttribute("aria-expanded", "false");
+  menu.projectId = null;
+  menu.trigger = null;
+  if (restoreFocus && trigger?.isConnected) trigger.focus();
+}
+
+menu.el.addEventListener("click", (e) => {
+  const item = e.target.closest("button[data-action]");
+  if (!item) return;
+  const id = menu.projectId;
+  closeProjectMenu();
+  if (item.dataset.action === "rename") renameProject(id);
+  if (item.dataset.action === "delete") deleteProject(id);
+});
+menu.el.addEventListener("keydown", (e) => {
+  const items = [...menu.el.querySelectorAll("button")];
+  const i = items.indexOf(document.activeElement);
+  if (e.key === "ArrowDown") { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+  if (e.key === "ArrowUp") { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+  if (e.key === "Tab") closeProjectMenu();
+});
+document.addEventListener("click", (e) => {
+  if (!menu.el.hidden && !menu.el.contains(e.target)) closeProjectMenu();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeProjectMenu({ restoreFocus: true });
+});
+window.addEventListener("resize", () => closeProjectMenu());
+$("#project-list").addEventListener("scroll", () => closeProjectMenu());
+
+async function renameProject(id) {
+  const p = state.projects.find((x) => x.id === id);
+  if (!p) return;
   const name = prompt("New project name", p.name);
-  if (!name || name === p.name) return;
+  if (!name || name.trim() === p.name) return;
   try {
-    await api(`/api/projects/${p.id}`, { method: "PUT", body: { name } });
+    await api(`/api/projects/${id}`, { method: "PUT", body: { name } });
     await loadProjects();
   } catch (err) { showErrors([err.message]); }
-});
+}
 
-$("#delete-project").addEventListener("click", async () => {
-  const p = current();
+async function deleteProject(id) {
+  const p = state.projects.find((x) => x.id === id);
+  if (!p) return;
   if (!confirm(`Delete project "${p.name}" and its trigger words?`)) return;
   try {
-    await api(`/api/projects/${p.id}`, { method: "DELETE" });
-    state.currentId = null;
-    $("#results-panel").hidden = true;
+    await api(`/api/projects/${id}`, { method: "DELETE" });
+    if (state.currentId === id) {
+      state.currentId = null;
+      state.results = [];
+      $("#results-panel").hidden = true;
+    }
     await loadProjects();
   } catch (err) { showErrors([err.message]); }
-});
+}
 
 $("#new-keyword-form").addEventListener("submit", async (e) => {
   e.preventDefault();

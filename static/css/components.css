@@ -206,11 +206,11 @@ legend { padding: 0 var(--space-1); }
   color: #fff;
   white-space: nowrap;
 }
-.sev-CRITICAL { background: var(--sev-critical); animation: critical-pulse 2.4s var(--ease-in-out) infinite; }
-.sev-HIGH     { background: var(--sev-high); }
+.sev-CRITICAL { background: var(--sev-critical); color: var(--sev-critical-text); box-shadow: inset 0 0 0 1px var(--sev-outline); animation: critical-pulse 2.4s var(--ease-in-out) infinite; }
+.sev-HIGH     { background: var(--sev-high);   color: var(--sev-high-text); }
 .sev-MEDIUM   { background: var(--sev-medium); color: var(--sev-medium-text); }
-.sev-LOW      { background: var(--sev-low); }
-.sev-NONE, .sev-UNKNOWN { background: var(--sev-none); }
+.sev-LOW      { background: var(--sev-low);    color: var(--sev-low-text); box-shadow: inset 0 0 0 1px rgba(61, 47, 0, .15); }
+.sev-NONE, .sev-UNKNOWN { background: var(--sev-none); color: var(--sev-none-text); }
 
 /* ---------- Stat tile ---------- */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-3); }
@@ -222,7 +222,7 @@ legend { padding: 0 var(--space-1); }
   overflow: hidden;
   animation: rise-in var(--duration-slow) var(--ease-out) both;
 }
-.stat::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--stat-color, var(--color-primary)); }
+.stat::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--stat-color, var(--color-primary)); box-shadow: inset -1px 0 0 var(--sev-outline); }
 .stat .value { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: var(--weight-bold); line-height: 1.1; font-variant-numeric: tabular-nums; }
 .stat .label { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-caps); text-transform: uppercase; }
 .stat.total { background: var(--gradient-brand); color: #fff; }
@@ -311,4 +311,7 @@ tbody tr.row-in:nth-child(n+10) { animation-delay: 270ms; }
 @keyframes gradient-drift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 @keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -40px) scale(1.08); } 66% { transform: translate(-25px, 20px) scale(.95); } }
 @keyframes logo-in { from { opacity: 0; filter: blur(8px); transform: translateY(8px) scale(.98); } to { opacity: 1; filter: blur(0); transform: none; } }
-@keyframes critical-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(155, 28, 49, .45); } 50% { box-shadow: 0 0 0 5px rgba(155, 28, 49, 0); } }
+@keyframes critical-pulse {
+  0%, 100% { box-shadow: inset 0 0 0 1px var(--sev-outline), 0 0 0 0 color-mix(in srgb, var(--sev-critical-glow) 40%, transparent); }
+  50%      { box-shadow: inset 0 0 0 1px var(--sev-outline), 0 0 0 5px color-mix(in srgb, var(--sev-critical-glow) 0%, transparent); }
+}

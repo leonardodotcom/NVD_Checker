@@ -36,14 +36,27 @@ only as a last resort add page-specific CSS. **Never hard-code a colour, size or
 | Brand scale | `--texa-navy-950 … --texa-navy-50` | backgrounds, borders, chips, hover states |
 | Accent | `--texa-cyan`, `--texa-cyan-300` | gradients, focus, highlights |
 | Neutrals | `--gray-900 … --gray-50` | text and surfaces (navy-tinted) |
-| Severity | `--sev-critical/high/medium/low/none` | CVSS badges and stat tiles only |
+| Severity | `--sev-critical/high/medium/low/none` + matching `--sev-*-text` | CVSS badges and stat tiles only (see below) |
 | Semantic | `--color-bg`, `--color-surface`, `--color-text`, `--color-text-muted`, `--color-primary`, `--color-link`, `--color-border`, `--color-danger`, `--color-focus` … | **what components use**; these switch automatically in dark mode |
 
 Components reference **semantic** tokens (`--color-surface`), not palette tokens (`--gray-50`). That is what
 makes dark mode a pure token swap.
 
-Every text/background pair used in the UI meets **WCAG AA (≥ 4.5:1)**. The medium-severity amber is the one
-exception to white text: it uses `--sev-medium-text` (dark brown) instead.
+Every text/background pair used in the UI meets **WCAG AA (≥ 4.5:1)**.
+
+### Severity scale
+
+| Severity | Colour | Fill | Text | Contrast |
+| --- | --- | --- | --- | --- |
+| Critical | black | `#111111` | white | 18.9 : 1 |
+| High | red | `#d62828` | white | 5.0 : 1 |
+| Medium (moderate) | orange | `#f97316` | `#3b1600` (dark) | 5.8 : 1 |
+| Low | yellow | `#facc15` | `#3d2f00` (dark) | 8.5 : 1 |
+| None / unknown | grey | `#5f6880` | white | 5.6 : 1 |
+
+Always set fill **and** text together (`--sev-x` + `--sev-x-text`). Orange and yellow must never carry white text;
+white on orange is only 2.8 : 1. In dark mode, `--sev-outline` adds a thin light edge so the black critical badge
+and stat bar don't disappear into the navy background, and the critical pulse glows white instead of black.
 
 ## Gradients
 

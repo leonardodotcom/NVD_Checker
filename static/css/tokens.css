@@ -68,13 +68,21 @@
   --gray-100: #eef1f7;
   --gray-50:  #f6f8fc;
 
-  /* ---------- Severity (CVSS) — fixed in both themes ---------- */
-  --sev-critical: #9b1c31;
-  --sev-high:     #c43c20;
-  --sev-medium:   #f0b429;   /* use with --sev-medium-text, not white */
-  --sev-medium-text: #3d2a00;
-  --sev-low:      #22774b;
-  --sev-none:     #5f6880;
+  /* ---------- Severity (CVSS) ----------
+     critical = black, high = red, medium (moderate) = orange, low = yellow.
+     Each fill has a paired text colour; all pairs pass WCAG AA (>= 4.5:1). */
+  --sev-critical:      #111111;
+  --sev-critical-text: #ffffff;
+  --sev-high:          #d62828;
+  --sev-high-text:     #ffffff;
+  --sev-medium:        #f97316;
+  --sev-medium-text:   #3b1600;
+  --sev-low:           #facc15;
+  --sev-low-text:      #3d2f00;
+  --sev-none:          #5f6880;
+  --sev-none-text:     #ffffff;
+  --sev-outline:       transparent;  /* edge for fills that sink into the background */
+  --sev-critical-glow: #111111;      /* colour of the critical pulse */
 
   /* ---------- Gradients ---------- */
   --gradient-brand: linear-gradient(135deg, var(--texa-navy) 0%, var(--texa-navy-600) 55%, var(--texa-cyan) 100%);
@@ -186,6 +194,8 @@
     --color-danger:        #ff7a70;
     --color-danger-soft:   #3a1220;
     --gradient-text: linear-gradient(90deg, var(--texa-navy-300) 0%, var(--texa-cyan-300) 100%);
+    --sev-outline:       rgba(255, 255, 255, .45);  /* keeps the black critical badge visible */
+    --sev-critical-glow: #ffffff;
     --gradient-page:
       radial-gradient(1200px 600px at 100% -10%, rgba(0, 163, 224, .12), transparent 60%),
       radial-gradient(900px 500px at -10% 110%, rgba(42, 91, 215, .18), transparent 60%);

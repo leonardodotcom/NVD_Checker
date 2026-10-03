@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>NVD Checker</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -15,6 +16,10 @@
       <input id="new-project-name" placeholder="New project name" maxlength="100" required>
       <button type="submit" title="Create project">+</button>
     </form>
+    <div class="account">
+      Signed in as <b id="current-user"></b><br>
+      <button id="logout-btn" class="ghost">Log out</button>
+    </div>
   </aside>
 
   <main>

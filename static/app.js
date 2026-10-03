@@ -23,6 +23,10 @@ async function api(path, options = {}) {
     ...options,
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
+  if (res.status === 401) {
+    window.location.href = "/login";
+    throw new Error("Session expired, please sign in again");
+  }
   if (!res.ok) {
     let detail = res.statusText;
     try { detail = (await res.json()).detail ?? detail; } catch {}
@@ -263,4 +267,14 @@ $("#export-btn").addEventListener("click", async () => {
   } catch (err) { showErrors([err.message]); }
 });
 
-loadSources().then(loadProjects).catch((err) => showErrors([err.message]));
+$("#logout-btn").addEventListener("click", async () => {
+  await fetch("/api/logout", { method: "POST" });
+  window.location.href = "/login";
+});
+
+async function loadUser() {
+  const { user } = await (await api("/api/me")).json();
+  $("#current-user").textContent = user;
+}
+
+loadUser().then(loadSources).then(loadProjects).catch((err) => showErrors([err.message]));

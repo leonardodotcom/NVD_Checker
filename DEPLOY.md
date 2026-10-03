@@ -227,6 +227,9 @@ cd /opt/nvd-checker
 sudo -u nvdchecker env $(sudo cat /etc/nvd-checker/nvd-checker.env | grep -v '^#' | xargs) \
   .venv/bin/python -m app.manage create-user alice
 ```
+(The app loads a `.env` file from its own folder automatically, but on Path B the settings live in
+`/etc/nvd-checker/`, which only root can read. That's why this command passes them in explicitly. The running
+service gets them from systemd's `EnvironmentFile`.)
 
 Then open `https://nvd-checker.yourcompany.local`.
 

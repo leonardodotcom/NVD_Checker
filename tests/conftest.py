@@ -1,6 +1,7 @@
 import os
 
 # Must be set before app.main is imported (it reads settings at import time).
+os.environ["ENV_FILE"] = ""  # never pick up a developer's local .env during tests
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ["COOKIE_SECURE"] = "0"
 os.environ.pop("NVD_API_KEY", None)

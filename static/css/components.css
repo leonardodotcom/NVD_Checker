@@ -121,6 +121,19 @@ input:not([type=checkbox]), select {
 input:not([type=checkbox]):hover, select:hover { border-color: var(--texa-navy-300); }
 input:not([type=checkbox]):focus, select:focus { outline: none; border-color: var(--color-accent); box-shadow: var(--ring); }
 input::placeholder { color: var(--color-text-muted); }
+/* Custom chevron for selects: the native arrow sits flush against the border */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 38px;
+  background-image: url("../icons/chevron-down.svg");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 16px;
+  cursor: pointer;
+}
+:root[data-theme="dark"] select { background-image: url("../icons/chevron-down-dark.svg"); }
+select::-ms-expand { display: none; }
 input[type=checkbox] { accent-color: var(--color-primary); width: 16px; height: 16px; margin: 0; }
 input[type=date] { padding: 0 8px; }
 

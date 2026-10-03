@@ -176,34 +176,39 @@
   color-scheme: light;
 }
 
-/* ---------- Dark theme (follows the OS setting) ---------- */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg:            #050b1f;
-    --color-surface:       #0b1534;
-    --color-surface-muted: #101d44;
-    --color-border:        #1b2a57;
-    --color-border-strong: #2a3d74;
-    --color-text:          #e6ebf7;
-    --color-text-muted:    #94a0bf;
-    --color-primary:       var(--texa-navy-500);
-    --color-primary-hover: var(--texa-navy-400);
-    --color-link:          var(--texa-cyan-300);
-    --color-chip:          #16285c;
-    --color-chip-text:     var(--texa-navy-200);
-    --color-danger:        #ff7a70;
-    --color-danger-soft:   #3a1220;
-    --gradient-text: linear-gradient(90deg, var(--texa-navy-300) 0%, var(--texa-cyan-300) 100%);
-    --sev-outline:       rgba(255, 255, 255, .45);  /* keeps the black critical badge visible */
-    --sev-critical-glow: #ffffff;
-    --gradient-page:
-      radial-gradient(1200px 600px at 100% -10%, rgba(0, 163, 224, .12), transparent 60%),
-      radial-gradient(900px 500px at -10% 110%, rgba(42, 91, 215, .18), transparent 60%);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
-    --shadow-md: 0 4px 14px rgba(0, 0, 0, .45);
-    --shadow-lg: 0 18px 44px rgba(0, 0, 0, .55);
-    color-scheme: dark;
-  }
+/* Smooth cross-fade while the user toggles the theme (class added by theme.js). */
+.theme-switching, .theme-switching *, .theme-switching *::before, .theme-switching *::after {
+  transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease, fill 300ms ease !important;
+}
+
+/* ---------- Dark theme ----------
+   Applied via <html data-theme="dark">. static/theme.js sets the attribute
+   before first paint from the saved choice, falling back to the OS setting. */
+:root[data-theme="dark"] {
+  --color-bg:            #050b1f;
+  --color-surface:       #0b1534;
+  --color-surface-muted: #101d44;
+  --color-border:        #1b2a57;
+  --color-border-strong: #2a3d74;
+  --color-text:          #e6ebf7;
+  --color-text-muted:    #94a0bf;
+  --color-primary:       var(--texa-navy-500);
+  --color-primary-hover: var(--texa-navy-400);
+  --color-link:          var(--texa-cyan-300);
+  --color-chip:          #16285c;
+  --color-chip-text:     var(--texa-navy-200);
+  --color-danger:        #ff7a70;
+  --color-danger-soft:   #3a1220;
+  --gradient-text: linear-gradient(90deg, var(--texa-navy-300) 0%, var(--texa-cyan-300) 100%);
+  --sev-outline:       rgba(255, 255, 255, .45);  /* keeps the black critical badge visible */
+  --sev-critical-glow: #ffffff;
+  --gradient-page:
+    radial-gradient(1200px 600px at 100% -10%, rgba(0, 163, 224, .12), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(42, 91, 215, .18), transparent 60%);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, .45);
+  --shadow-lg: 0 18px 44px rgba(0, 0, 0, .55);
+  color-scheme: dark;
 }
 
 /* ---------- Reduced motion: keep transitions instant, stop ambient loops ---------- */

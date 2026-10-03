@@ -25,10 +25,13 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 cp .env.example .env
 # in .env: set SECRET_KEY (any random string) and COOKIE_SECURE=0 (plain http on localhost)
-export $(grep -v '^#' .env | xargs)
 python -m app.manage create-user admin      # prompts for a password (min. 10 characters)
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
+
+The app reads `.env` from the project folder automatically, with no `export` needed. Variables already set in
+your shell (or by Docker/systemd) take precedence over the file. To use a different file, set `ENV_FILE=/path/to/file`;
+set `ENV_FILE=` (empty) to turn loading off.
 
 Open http://localhost:8000 and sign in. Create a project, add trigger words (tick *exact phrase* for multi-word terms that
 must appear verbatim), choose sources and a time range, and click **Search**.

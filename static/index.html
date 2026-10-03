@@ -3,90 +3,121 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NVD Checker</title>
+  <title>NVD Checker · TEXA</title>
   <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preload" href="/static/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/bitter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <link rel="stylesheet" href="/static/css/app.css">
 </head>
-<body>
+<body class="app">
   <aside class="sidebar">
-    <h1>NVD Checker</h1>
-    <h2>Projects</h2>
-    <ul id="project-list" class="project-list"></ul>
-    <form id="new-project-form" class="inline-form">
-      <input id="new-project-name" placeholder="New project name" maxlength="100" required>
-      <button type="submit" title="Create project">+</button>
-    </form>
+    <div class="sidebar-glow" aria-hidden="true"></div>
+    <a class="brand" href="/" aria-label="NVD Checker home">
+      <img class="brand-logo" src="/static/brand/texa-logo-white.svg" alt="TEXA" width="124" height="25">
+      <span class="brand-product">NVD Checker</span>
+    </a>
+
+    <nav class="sidebar-section" aria-label="Projects">
+      <div class="sidebar-label">Projects</div>
+      <ul id="project-list" class="project-list"></ul>
+      <form id="new-project-form" class="new-project">
+        <input id="new-project-name" placeholder="New project…" maxlength="100" required aria-label="New project name">
+        <button type="submit" class="icon" title="Create project" aria-label="Create project">+</button>
+      </form>
+    </nav>
+
     <div class="account">
-      Signed in as <b id="current-user"></b><br>
-      <button id="logout-btn" class="ghost">Log out</button>
+      <span class="avatar" id="user-avatar" aria-hidden="true"></span>
+      <div class="account-text">
+        <span class="account-label">Signed in as</span>
+        <b id="current-user"></b>
+      </div>
+      <button id="logout-btn" class="icon" title="Log out" aria-label="Log out"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button>
     </div>
   </aside>
 
-  <main>
-    <section id="empty-state" class="card empty">
-      <p>Create a project on the left, then add the trigger words you want to monitor.</p>
+  <main class="content">
+    <header class="page-header">
+      <div>
+        <div class="eyebrow">Vulnerability watch</div>
+        <h1 class="page-title"><span id="project-title" class="gradient-text">Welcome</span></h1>
+      </div>
+      <div class="actions" id="project-actions" hidden>
+        <button id="rename-project" class="ghost">Rename</button>
+        <button id="delete-project" class="ghost danger">Delete</button>
+      </div>
+    </header>
+
+    <section id="empty-state" class="card empty reveal">
+      <img src="/static/favicon.svg" alt="" width="56" height="56" class="empty-mark">
+      <h2>Start monitoring</h2>
+      <p class="text-muted">Create a project in the sidebar, then add the trigger words you want to watch in the vulnerability databases.</p>
     </section>
 
-    <section id="project-panel" class="card" hidden>
-      <div class="panel-head">
-        <h2 id="project-title"></h2>
-        <div class="actions">
-          <button id="rename-project" class="ghost">Rename</button>
-          <button id="delete-project" class="ghost danger">Delete</button>
-        </div>
+    <section id="project-panel" class="card accent-top reveal" hidden>
+      <div class="card-head">
+        <h2>Trigger words</h2>
+        <span class="text-muted" id="keyword-count"></span>
       </div>
-      <h3>Trigger words</h3>
       <div id="keyword-chips" class="chips"></div>
       <form id="new-keyword-form" class="inline-form">
-        <input id="new-keyword-term" placeholder="Add a trigger word, e.g. openssl, remote code execution" maxlength="200" required>
-        <label class="check"><input type="checkbox" id="new-keyword-exact"> exact phrase</label>
+        <input id="new-keyword-term" placeholder="Add a trigger word, e.g. openssl, remote code execution" maxlength="200" required aria-label="Trigger word">
+        <label class="check"><input type="checkbox" id="new-keyword-exact"> Exact phrase</label>
         <button type="submit">Add</button>
       </form>
     </section>
 
-    <section id="search-panel" class="card" hidden>
+    <section id="search-panel" class="card reveal" hidden>
       <div class="controls">
         <fieldset>
-          <legend>Sources</legend>
+          <legend class="eyebrow">Sources</legend>
           <div id="source-list" class="sources"></div>
         </fieldset>
         <fieldset>
-          <legend>Time range</legend>
-          <select id="window">
-            <option value="24h">Last 24 hours</option>
-            <option value="7d" selected>Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="180d">Last 6 months</option>
-            <option value="365d">Last year</option>
-            <option value="custom">Custom…</option>
-          </select>
-          <span id="custom-range" hidden>
-            <input type="date" id="custom-start"> → <input type="date" id="custom-end">
-          </span>
-          <select id="date-field" title="Which date to filter on">
-            <option value="published">by published date</option>
-            <option value="modified">by last-modified date</option>
-          </select>
+          <legend class="eyebrow">Time range</legend>
+          <div class="range">
+            <select id="window" aria-label="Time range">
+              <option value="24h">Last 24 hours</option>
+              <option value="7d" selected>Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              <option value="90d">Last 90 days</option>
+              <option value="180d">Last 6 months</option>
+              <option value="365d">Last year</option>
+              <option value="custom">Custom…</option>
+            </select>
+            <span id="custom-range" class="custom-range" hidden>
+              <input type="date" id="custom-start" aria-label="From"> <span class="text-muted">→</span> <input type="date" id="custom-end" aria-label="To">
+            </span>
+            <select id="date-field" title="Which date to filter on" aria-label="Date field">
+              <option value="published">by published date</option>
+              <option value="modified">by last-modified date</option>
+            </select>
+          </div>
         </fieldset>
-        <button id="search-btn" class="primary">Search</button>
+        <button id="search-btn" class="primary search-btn">Search</button>
       </div>
-      <p class="hint" id="rate-hint"></p>
+      <p class="hint text-muted" id="rate-hint"></p>
     </section>
 
     <section id="errors" class="errors" hidden></section>
 
-    <section id="results-panel" class="card" hidden>
-      <div class="summary" id="summary"></div>
+    <section id="results-panel" class="card reveal" hidden>
+      <div class="card-head">
+        <h2>Results</h2>
+        <span class="text-muted" id="results-range"></span>
+      </div>
+      <div class="stats" id="summary"></div>
       <div class="keyword-counts" id="keyword-counts"></div>
       <div class="filters">
-        <input id="text-filter" type="search" placeholder="Filter results…">
-        <select id="severity-filter">
+        <input id="text-filter" type="search" placeholder="Filter results…" aria-label="Filter results">
+        <select id="severity-filter" aria-label="Severity filter">
           <option value="">All severities</option>
           <option>CRITICAL</option><option>HIGH</option><option>MEDIUM</option>
           <option>LOW</option><option>NONE</option><option>UNKNOWN</option>
         </select>
-        <button id="export-btn" class="ghost">Export CSV</button>
+        <button id="export-btn">Export CSV</button>
       </div>
       <div class="table-wrap">
         <table>

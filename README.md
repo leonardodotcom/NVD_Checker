@@ -12,6 +12,9 @@ aggregates the results into a single de-duplicated, sortable list that you can e
   keywords each CVE matched are merged. The list is sorted newest first, then by severity, with per-keyword and
   per-severity counts.
 
+> **UI / branding:** the interface uses a TEXA-branded design system. Tokens, components and motion are documented
+> in **[DESIGN.md](DESIGN.md)**, with a live style guide at `/static/styleguide.html`.
+>
 > **Installing on a server for your team?** Follow **[DEPLOY.md](DEPLOY.md)**. It's a step-by-step guide covering
 > Docker or systemd + nginx, HTTPS, user accounts, backups and troubleshooting.
 
@@ -77,7 +80,7 @@ app/
   sources/                source adapters (nvd.py, cnnvd.py, cnvd.py) + registry
   services/aggregator.py  fan-out, de-duplication, sorting, counts
   routers/                REST endpoints
-static/                   single-page UI (vanilla JS)
+static/                   single-page UI (vanilla JS) + TEXA design system (see DESIGN.md)
 tests/                    pytest suite (NVD mocked with respx)
 deploy/                   Caddyfile, systemd unit, nginx example
 Dockerfile, docker-compose.yml

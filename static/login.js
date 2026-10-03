@@ -4,6 +4,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
   const button = e.target.querySelector("button");
   error.hidden = true;
   button.disabled = true;
+  button.classList.add("is-loading");
   try {
     const res = await fetch("/api/login", {
       method: "POST",
@@ -21,10 +22,15 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     try { detail = (await res.json()).detail || detail; } catch {}
     error.textContent = detail;
     error.hidden = false;
+    const card = document.querySelector(".login-card");
+    card.classList.remove("shake");
+    void card.offsetWidth; // restart the animation
+    card.classList.add("shake");
   } catch {
     error.textContent = "Cannot reach the server";
     error.hidden = false;
   } finally {
     button.disabled = false;
+    button.classList.remove("is-loading");
   }
 });

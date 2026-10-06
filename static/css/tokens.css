@@ -114,7 +114,7 @@
 
   /* ---------- Typography ---------- */
   --font-display: "Bitter", "Rockwell", "Roboto Slab", Georgia, serif;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
 
   --text-xs: 0.75rem;    /* 12px — captions, badges */

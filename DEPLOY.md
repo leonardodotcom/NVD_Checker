@@ -347,3 +347,52 @@ https://docs.docker.com/engine/daemon/proxy/.
 
 Run the health check on the server itself:
 `curl -k https://localhost/healthz` should return `{"status":"ok"}`.
+
+## 11. Chinese databases (CNNVD / CNVD)
+
+CNNVD (run by CNITSEC) and CNVD (run by CNCERT/CC) are Chinese-language websites with **no API**, and they need a
+login. The app therefore uses a login session that **a person captures once in a real browser**; the server reuses
+it until the site rejects it. No password is ever read or stored.
+
+> **Status:** the session tooling, source status in the UI and the result merging are done. The page parsers for
+> each site are written after the one-time recording step in "Step 0" below, because the exact pages and
+> parameters of both sites must be confirmed on a real login. Until then both sources show as
+> "coming soon" and cannot be selected.
+
+**Before you start**
+- Check each site's terms of use and your company's policy for automated access. Use a **dedicated account**, not a
+  personal one, and keep request volume low (the app waits `CN_REQUEST_DELAY` seconds between pages and caches
+  results for `CN_CACHE_TTL`).
+- Allow outbound HTTPS from the server to `www.cnnvd.org.cn` and `www.cnvd.org.cn` (firewall / proxy allow-list).
+- Type your trigger words in **Chinese** for these sources; the entries are written in Chinese. A CVE id (for
+  example `CVE-2026-1234`) also matches, since entries cite them.
+
+**Step 0: record the sites (once, on your own computer)**
+```bash
+python -m pip install -r requirements-cn.txt && python -m playwright install chromium
+python scripts/cn_probe.py cnvd        # then: python scripts/cn_probe.py cnnvd
+```
+A browser opens: log in, open the vulnerability list, search one keyword, open one entry, press Enter in the
+terminal. The script saves a folder (`cn_probe_out/…`) with the requests the site made. Cookies, passwords and the
+bodies of login requests are never recorded. Skim the folder, then hand it over so the parsers can be written.
+
+**Capture a session (repeat whenever it expires)**
+A server has no screen, so do this on your laptop:
+```bash
+python -m app.manage cn-login cnvd --out cnvd-session.json     # log in in the window, press Enter
+```
+Then install it on the server (the file is a credential: transfer it securely, delete the copy afterwards):
+```bash
+# Docker
+docker compose cp cnvd-session.json app:/tmp/cnvd-session.json
+docker compose exec app python -m app.manage cn-import-session cnvd /tmp/cnvd-session.json
+docker compose exec app rm /tmp/cnvd-session.json
+# Without Docker (run as the service user, with the same environment file as in step B6)
+sudo -u nvdchecker ... .venv/bin/python -m app.manage cn-import-session cnvd /path/to/cnvd-session.json
+```
+Check it with `python -m app.manage cn-session-status` (Docker: `docker compose exec app …`). Sessions are stored in
+`CN_SESSION_DIR` (`/data/sessions` in Docker, on the same volume as the database, mode 0600). They are not part of the
+image and not in git.
+
+**When a session expires** the source turns red in the UI ("session expired"), and searches that include it show an
+error naming the command to run. Capture a new session as above; no restart is needed.

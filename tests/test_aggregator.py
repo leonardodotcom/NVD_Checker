@@ -60,3 +60,28 @@ def test_resolve_window_presets_and_custom():
         resolve_window(SearchRequest(window="custom"))
     with pytest.raises(ValueError):
         resolve_window(SearchRequest(window="custom", start=ts(5), end=ts(1)))
+
+
+def test_merge_by_alias_combines_nvd_and_chinese_entries():
+    from app.services.aggregator import merge_by_alias
+
+    nvd = Vulnerability(id="CVE-2026-5", source="nvd", description="Heap overflow", cvss_score=9.8,
+                        severity="CRITICAL", published=ts(3), matched_keywords=["openssl"])
+    cn = Vulnerability(id="CNNVD-202609-100", source="cnnvd", description="堆溢出漏洞", severity="HIGH",
+                       published=ts(2), aliases=["CVE-2026-5"], matched_keywords=["堆溢出"])
+    other = Vulnerability(id="CNVD-2026-7", source="cnvd", description="另一个漏洞", published=ts(1))
+    merged = merge_by_alias([cn, other, nvd])  # order must not matter: NVD stays primary
+
+    assert [v.id for v in merged] == ["CVE-2026-5", "CNVD-2026-7"]
+    row = merged[0]
+    assert row.sources == ["nvd", "cnnvd"]
+    assert row.aliases == ["CNNVD-202609-100"]
+    assert row.matched_keywords == ["openssl", "堆溢出"]
+    assert row.severity == "CRITICAL" and row.cvss_score == 9.8
+    assert merged[1].sources == ["cnvd"]
+
+
+def test_aggregate_sets_sources_for_plain_entries():
+    src = FakeSource({"x": [{"id": "CVE-1", "published": ts(1)}]})
+    resp = asyncio.run(aggregate([src], [SearchKeyword(term="x")], ts(1), ts(2), "published"))
+    assert resp.results[0].sources == ["fake"]

@@ -6,3 +6,5 @@ __pycache__/
 .venv/
 certs/
 *.whl
+sessions/
+cn_probe_out/

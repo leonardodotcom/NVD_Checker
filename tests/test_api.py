@@ -28,7 +28,9 @@ def test_project_crud(client):
 def test_sources_listing(client):
     sources = {s["id"]: s for s in client.get("/api/sources").json()}
     assert sources["nvd"]["enabled"] is True
+    assert sources["nvd"]["status"] == "ready"
     assert sources["cnnvd"]["enabled"] is False and sources["cnnvd"]["requires_auth"] is True
+    assert sources["cnnvd"]["status"] == "not_implemented" and sources["cnnvd"]["status_detail"]
     assert sources["cnvd"]["enabled"] is False
 
 
@@ -51,7 +53,7 @@ def test_search_with_project_and_csv(client):
     csv_resp = client.post("/api/search/export.csv", json=body)
     assert csv_resp.headers["content-type"].startswith("text/csv")
     lines = csv_resp.text.strip().splitlines()
-    assert lines[0].startswith("id,source,severity") and "CVE-2026-1" in lines[1]
+    assert lines[0].startswith("id,sources,aliases,severity") and "CVE-2026-1" in lines[1]
 
 
 def test_search_validation(client):

@@ -106,6 +106,8 @@ Scale: `--text-xs` 12 · `--text-sm` 13 · `--text-md` 14 (body) · `--text-lg` 
 | Severity badge | `.sev .sev-CRITICAL` … | critical badge pulses gently |
 | Stat tile | `.stats > .stat`, `.stat.total`, `.stat.sev-tile-HIGH` … | number counts up on render |
 | Alert | `.alert` | errors (role="alert") |
+| Source badge | `.src` | outlined pill naming the database(s) that reported a result (NVD / CNNVD / CNVD); a merged row shows several |
+| Source status | `.sources label`, `.sources label.warn` | small text after each source name from the backend (`status_detail`); expired sessions turn red |
 | Table | `.table-wrap > table`, `th[data-sort]`, `tr.row-in` | sticky header; rows stagger in |
 | Skeleton | `.skeleton .w-40/60/80/100` | shimmer placeholder while searching |
 

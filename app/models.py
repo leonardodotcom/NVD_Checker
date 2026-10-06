@@ -48,6 +48,10 @@ class Vulnerability(BaseModel):
     references: list[str] = []
     url: str | None = None
     matched_keywords: list[str] = []
+    # Other identifiers for the same flaw (e.g. the CVE id cited by a CNNVD/CNVD entry)
+    aliases: list[str] = []
+    # Every database that reported this flaw (filled in by the aggregator when entries merge)
+    sources: list[str] = []
 
 
 class SearchRequest(BaseModel):
@@ -82,3 +86,6 @@ class SourceInfo(BaseModel):
     enabled: bool
     requires_auth: bool
     description: str = ""
+    # "ready" | "login_required" | "session_expired" | "not_implemented"
+    status: str = "ready"
+    status_detail: str = ""

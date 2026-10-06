@@ -59,6 +59,10 @@ class Settings:
     cookie_secure: bool
     session_max_age: int
     enable_docs: bool
+    cn_session_dir: str
+    cn_request_delay: float
+    cn_max_pages: int
+    cn_cache_ttl: int
 
 
 def get_settings() -> Settings:
@@ -70,4 +74,8 @@ def get_settings() -> Settings:
         cookie_secure=_flag("COOKIE_SECURE", "1"),
         session_max_age=int(os.getenv("SESSION_MAX_AGE", str(8 * 3600))),
         enable_docs=_flag("ENABLE_DOCS", "0"),
+        cn_session_dir=os.getenv("CN_SESSION_DIR", "sessions"),
+        cn_request_delay=float(os.getenv("CN_REQUEST_DELAY", "1.5")),
+        cn_max_pages=int(os.getenv("CN_MAX_PAGES", "40")),
+        cn_cache_ttl=int(os.getenv("CN_CACHE_TTL", str(6 * 3600))),
     )

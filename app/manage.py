@@ -4,14 +4,25 @@
     python -m app.manage set-password <username>
     python -m app.manage delete-user <username>
     python -m app.manage list-users
+
+Chinese databases (CNNVD / CNVD) need a login session captured by a human:
+
+    python -m app.manage cn-login <cnnvd|cnvd> [--out FILE] [--url URL]
+    python -m app.manage cn-import-session <cnnvd|cnvd> FILE
+    python -m app.manage cn-session-status
 """
 
 import argparse
 import getpass
+import os
 import sys
+
+import json
+from pathlib import Path
 
 from . import auth
 from .db import init_db
+from .sources import cn_session
 
 
 def _ask_password() -> str:
@@ -21,6 +32,35 @@ def _ask_password() -> str:
     return password
 
 
+def _cn_command(args) -> int:
+    if args.command == "cn-login":
+        from .sources.cn_capture import capture_state
+
+        state = capture_state(args.site, args.url)
+        if args.out:
+            out = Path(args.out)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            fd = os.open(out, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
+                json.dump(cn_session.validate_state(state), fh)
+            print(f"Saved session to {out}. Upload it to the server and run:")
+            print(f"    python -m app.manage cn-import-session {args.site} {out.name}")
+        else:
+            print(f"Saved session to {cn_session.save_state(args.site, state)}")
+        print("Treat this file like a password: do not email it or commit it.")
+    elif args.command == "cn-import-session":
+        try:
+            state = json.loads(Path(args.file).read_text(encoding="utf-8"))
+            print(f"Installed session at {cn_session.save_state(args.site, state)}")
+        except (OSError, ValueError) as exc:
+            sys.exit(f"Cannot import session: {exc}")
+    else:
+        for site in cn_session.SITES:
+            status, detail = cn_session.describe(site)
+            print(f"{site}\t{status}\t{detail}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m app.manage", description="NVD Checker administration")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -28,7 +68,19 @@ def main(argv: list[str] | None = None) -> int:
         p = sub.add_parser(name)
         p.add_argument("username")
     sub.add_parser("list-users")
+
+    login = sub.add_parser("cn-login", help="log in to CNNVD/CNVD in a browser window and save the session")
+    login.add_argument("site", choices=cn_session.SITES)
+    login.add_argument("--out", help="write the session here instead of the server's session directory")
+    login.add_argument("--url", help="page to open first (default: the site's home page)")
+    imp = sub.add_parser("cn-import-session", help="install a session file captured on another machine")
+    imp.add_argument("site", choices=cn_session.SITES)
+    imp.add_argument("file")
+    sub.add_parser("cn-session-status", help="show whether the saved CNNVD/CNVD sessions are usable")
     args = parser.parse_args(argv)
+
+    if args.command in ("cn-login", "cn-import-session", "cn-session-status"):
+        return _cn_command(args)
 
     init_db()
     try:

@@ -7,7 +7,7 @@
 
 Chinese databases (CNNVD / CNVD) need a login session captured by a human:
 
-    python -m app.manage cn-login <cnnvd|cnvd> [--out FILE] [--url URL]
+    python -m app.manage cn-login <cnnvd|cnvd> [--out FILE] [--url URL] [--launch] [--port N]
     python -m app.manage cn-import-session <cnnvd|cnvd> FILE
     python -m app.manage cn-session-status
 """
@@ -36,7 +36,7 @@ def _cn_command(args) -> int:
     if args.command == "cn-login":
         from .sources.cn_capture import capture_state
 
-        state = capture_state(args.site, args.url)
+        state = capture_state(args.site, args.url, launch=args.launch, port=args.port)
         if args.out:
             out = Path(args.out)
             out.parent.mkdir(parents=True, exist_ok=True)
@@ -73,6 +73,9 @@ def main(argv: list[str] | None = None) -> int:
     login.add_argument("site", choices=cn_session.SITES)
     login.add_argument("--out", help="write the session here instead of the server's session directory")
     login.add_argument("--url", help="page to open first (default: the site's home page)")
+    login.add_argument("--launch", action="store_true",
+                       help="launch a new browser instead of attaching to your own Chrome (anti-bot sites show a blank page)")
+    login.add_argument("--port", type=int, default=9222, help="Chrome debugging port for attach mode (default 9222)")
     imp = sub.add_parser("cn-import-session", help="install a session file captured on another machine")
     imp.add_argument("site", choices=cn_session.SITES)
     imp.add_argument("file")

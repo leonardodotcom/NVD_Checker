@@ -1,131 +1,97 @@
 #!/usr/bin/env python3
 """Phase 0 probe: record how CNNVD / CNVD behave so the adapters can be written against real data.
 
-Run on YOUR computer (it needs a display and your manual login):
+These sites show a BLANK PAGE to a browser that automation launched, so this script does not
+launch one. It attaches to YOUR OWN Chrome (started normally by you) and only watches the
+network traffic, like the DevTools Network tab. You do everything by hand.
 
-    python -m pip install -r requirements-cn.txt && python -m playwright install chromium
-    python scripts/cn_probe.py cnvd          # or: cnnvd
+Steps (run from the project folder):
 
-What happens:
-  1. A browser window opens. Log in yourself (captcha / SMS included).
-  2. Open the vulnerability list, search for one keyword (e.g. "Apache"), open one entry.
-  3. Press Enter in the terminal. The script writes a folder with:
-       index.json     every request the page made (method, URL, status, content type, size)
-       bodies/        a copy of the JSON/HTML responses (capped in size)
-       dom_*.html     the final page(s) as rendered
-       summary.md     the distinct endpoints, to read first
+    python -m pip install -r requirements-cn.txt     # one-time
+    python scripts/cn_probe.py cnvd                  # prints the Chrome command to run, then run it again
 
-Privacy: cookies, Set-Cookie, Authorization headers and request bodies of login/captcha/SMS
-requests are NEVER recorded, and password/token-looking values are blanked. Still, open the
-folder and skim it before sharing; the pages may show your account name.
+  1. Start Chrome with the command the script prints (it uses a separate profile folder).
+  2. Run the script again; it attaches.
+  3. In that Chrome window: open the site, log in (captcha / SMS included), open the vulnerability
+     list, search for ONE keyword (e.g. Apache), open ONE entry.
+  4. Press Enter in the terminal. A folder is written with:
+       index.json     every request the page made (method, URL, status, content type)
+       bodies/        copies of the JSON/HTML responses (size-capped)
+       dom_*.html     the open page(s) as rendered
+       summary.md     the distinct endpoints, read this first
+
+No Chrome available or this route fails? Export a HAR from DevTools instead (see DEPLOY.md,
+section 11) and run  python scripts/har_sanitize.py file.har cnvd
+
+Privacy: cookies, Set-Cookie and Authorization headers and the bodies of login/captcha/SMS
+requests are never recorded, and password/token-looking values are blanked. Still, skim the
+folder before sharing; the pages may show your account name.
 """
 
 import argparse
-import json
-import re
+import sys
 import time
-from collections import Counter
 from pathlib import Path
-from urllib.parse import urlsplit
 
-START_URLS = {"cnnvd": "https://www.cnnvd.org.cn/", "cnvd": "https://www.cnvd.org.cn/"}
-SENSITIVE_URL = re.compile(r"login|logout|passw|pwd|auth|captcha|verify|sms|token|session|signin", re.I)
-SECRET_VALUE = re.compile(r'(?i)("?(?:password|passwd|pwd|token|authorization|cookie|ticket|csrf\w*)"?\s*[:=]\s*)("[^"]*"|[^&\s,}]+)')
-RECORDED_TYPES = ("json", "html", "xml", "text/plain", "javascript")
-MAX_BODY = 300_000
-MAX_FILES = 80
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-
-def redact(text: str) -> str:
-    return SECRET_VALUE.sub(lambda m: m.group(1) + '"<redacted>"', text)
+from app.sources import cn_recording as rec  # noqa: E402
+from app.sources.cn_capture import DEFAULT_PORT, START_URLS, connect_chrome  # noqa: E402
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("site", choices=START_URLS)
-    ap.add_argument("--url", help="page to open first")
+    ap.add_argument("--port", type=int, default=DEFAULT_PORT, help="Chrome debugging port (default 9222)")
     ap.add_argument("--out", help="output folder (default: cn_probe_out/<site>-<timestamp>)")
     args = ap.parse_args()
 
     try:
         from playwright.sync_api import sync_playwright
     except ImportError:
-        raise SystemExit("Install first:  python -m pip install -r requirements-cn.txt && python -m playwright install chromium")
+        raise SystemExit("Install first:  python -m pip install -r requirements-cn.txt")
 
     out = Path(args.out or f"cn_probe_out/{args.site}-{time.strftime('%Y%m%d-%H%M%S')}")
-    (out / "bodies").mkdir(parents=True, exist_ok=True)
     records: list[dict] = []
     saved = 0
 
     def on_response(resp):
         nonlocal saved
         req = resp.request
-        url = req.url
         ctype = (resp.headers.get("content-type") or "").split(";")[0].strip()
-        sensitive = bool(SENSITIVE_URL.search(url))
-        rec = {
-            "n": len(records),
-            "method": req.method,
-            "url": url,
-            "status": resp.status,
-            "resource_type": req.resource_type,
-            "content_type": ctype,
-            "request_content_type": req.headers.get("content-type", ""),
-            "sensitive_url_body_skipped": sensitive,
-        }
-        if not sensitive and req.post_data:
-            rec["request_body"] = redact(req.post_data[:5000])
-        if (
-            not sensitive
-            and saved < MAX_FILES
-            and req.resource_type in ("document", "xhr", "fetch")
-            and any(t in ctype for t in RECORDED_TYPES)
-        ):
+        r = rec.make_record(
+            len(records), req.method, req.url, resp.status, req.resource_type, ctype,
+            req.headers.get("content-type", ""), req.post_data,
+        )
+        if rec.wants_body(req.url, req.resource_type, ctype, saved):
             try:
-                body = resp.body()[:MAX_BODY].decode("utf-8", errors="replace")
-                name = f"{rec['n']:03d}_{req.method}_{urlsplit(url).path.strip('/').replace('/', '_')[:60] or 'root'}.txt"
-                (out / "bodies" / name).write_text(redact(body), encoding="utf-8")
-                rec["body_file"] = name
+                rec.write_body(out, r, resp.body().decode("utf-8", errors="replace"))
                 saved += 1
-            except Exception as exc:  # response may be gone (redirect / navigation)
-                rec["body_error"] = str(exc)[:100]
-        records.append(rec)
+            except Exception as exc:  # the response can be gone after a navigation
+                r["body_error"] = str(exc)[:100]
+        records.append(r)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        context = browser.new_context(locale="zh-CN")
+        browser, context = connect_chrome(p, args.port)
         context.on("response", on_response)
-        page = context.new_page()
-        page.goto(args.url or START_URLS[args.site])
-        print("\n1) Log in in the browser window.")
-        print("2) Open the vulnerability list, search for ONE keyword (e.g. Apache), open ONE entry.")
+        print(f"\nAttached to your Chrome. Recording started. Open {START_URLS[args.site]} in that window.")
+        print("1) Log in.  2) Open the vulnerability list, search ONE keyword, open ONE entry.")
         input("3) Press Enter here when done... ")
         for i, pg in enumerate(context.pages):
             try:
-                (out / f"dom_{i}.html").write_text(redact(pg.content()), encoding="utf-8")
+                (out / f"dom_{i}.html").parent.mkdir(parents=True, exist_ok=True)
+                (out / f"dom_{i}.html").write_text(rec.redact(pg.content()), encoding="utf-8")
                 records.append({"n": len(records), "dom_snapshot": f"dom_{i}.html", "url": pg.url})
             except Exception:
                 pass
-        # Session lifetime hints (names and expiry only, never values)
-        cookies = [
+        cookie_names = [  # names and expiry only, never values: tells us how long a session lasts
             {"name": c["name"], "domain": c["domain"], "expires": c.get("expires"), "httpOnly": c.get("httpOnly")}
             for c in context.cookies()
         ]
-        browser.close()
+        browser.close()  # only disconnects; your Chrome stays open
 
-    (out / "index.json").write_text(json.dumps(records, ensure_ascii=False, indent=1), encoding="utf-8")
-    (out / "cookie_names.json").write_text(json.dumps(cookies, indent=1), encoding="utf-8")
-
-    endpoints = Counter(
-        (r["method"], urlsplit(r["url"]).netloc + urlsplit(r["url"]).path, r.get("content_type", ""))
-        for r in records
-        if r.get("resource_type") in ("xhr", "fetch", "document")
-    )
-    lines = [f"# Probe summary: {args.site}", "", f"{len(records)} requests recorded, {saved} bodies saved.", "",
-             "| count | method | endpoint | content-type |", "|---|---|---|---|"]
-    lines += [f"| {n} | {m} | {path} | {ct} |" for (m, path, ct), n in endpoints.most_common()]
-    (out / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"\nDone. Read {out / 'summary.md'} first, skim the folder, then share it.")
+    summary = rec.write_results(out, args.site, records, cookie_names)
+    print(f"\nDone. Read {summary} first, skim the folder, then share it.")
 
 
 if __name__ == "__main__":

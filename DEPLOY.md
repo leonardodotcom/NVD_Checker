@@ -357,7 +357,9 @@ it until the site rejects it. No password is ever read or stored.
 > **Status:** the session tooling, source status in the UI and the result merging are done. The page parsers for
 > each site are written after the one-time recording step in "Step 0" below, because the exact pages and
 > parameters of both sites must be confirmed on a real login. Until then both sources show as
-> "coming soon" and cannot be selected.
+> "coming soon" and cannot be selected. Because the sites block automated browsers, a server may not be able to
+> scrape them live; the recordings decide whether searches run live or against a copy that is refreshed from your
+> own computer.
 
 **Before you start**
 - Check each site's terms of use and your company's policy for automated access. Use a **dedicated account**, not a
@@ -367,19 +369,42 @@ it until the site rejects it. No password is ever read or stored.
 - Type your trigger words in **Chinese** for these sources; the entries are written in Chinese. A CVE id (for
   example `CVE-2026-1234`) also matches, since entries cite them.
 
+**Why not just run a script that opens a browser?** CNNVD and CNVD sit behind JavaScript anti-bot checks, and they
+show a **completely blank page** to a browser that automation launched. So everything below works with **your own,
+normally started Chrome**: our tools only *attach and watch* (like the DevTools Network tab); you do all the
+clicking, login and captchas. Nothing is disguised or spoofed.
+
 **Step 0: record the sites (once, on your own computer)**
+
+*Route A: the probe attaches to your Chrome*
 ```bash
-python -m pip install -r requirements-cn.txt && python -m playwright install chromium
-python scripts/cn_probe.py cnvd        # then: python scripts/cn_probe.py cnnvd
+python -m pip install -r requirements-cn.txt          # one-time (no browser download needed)
+python scripts/cn_probe.py cnvd                        # prints the exact Chrome command for your system
 ```
-A browser opens: log in, open the vulnerability list, search one keyword, open one entry, press Enter in the
-terminal. The script saves a folder (`cn_probe_out/…`) with the requests the site made. Cookies, passwords and the
-bodies of login requests are never recorded. Skim the folder, then hand it over so the parsers can be written.
+1. Run the Chrome command it prints. Example for macOS (it uses a separate profile folder; Chrome 136+ ignores the
+   debugging port on your normal profile):
+   ```bash
+   /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 --user-data-dir="$HOME/cn-chrome-profile"
+   ```
+2. Run `python scripts/cn_probe.py cnvd` again; it says "Attached to your Chrome".
+3. In that Chrome window: open the site, log in, open the vulnerability list, search **one** keyword, open **one**
+   entry. Then press Enter in the terminal.
+4. Repeat with `cnnvd`. Close that Chrome when you are done (the debugging port gives local programs control of it).
+
+*Route B: no code, just a file from DevTools*
+1. In Chrome press F12 → **Network** tab → tick **Preserve log**.
+2. Log in, open the list, search one keyword, open one entry.
+3. Right-click inside the request list → **Save all as HAR with content**.
+4. `python scripts/har_sanitize.py cnvd.har cnvd`, then **delete the .har** (it contains your cookies).
+
+Both routes write a folder (`cn_probe_out/…`) with the requests the site made. Cookies, all headers, passwords and
+the bodies of login/captcha/SMS requests are never kept. Skim the folder (pages may show your account name), then
+hand it over so the parsers can be written.
 
 **Capture a session (repeat whenever it expires)**
-A server has no screen, so do this on your laptop:
+A server has no screen, so do this on your laptop, with Chrome started as in Step 0 (the command attaches to it too):
 ```bash
-python -m app.manage cn-login cnvd --out cnvd-session.json     # log in in the window, press Enter
+python -m app.manage cn-login cnvd --out cnvd-session.json     # log in in your Chrome window, press Enter
 ```
 Then install it on the server (the file is a credential: transfer it securely, delete the copy afterwards):
 ```bash

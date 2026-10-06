@@ -1,26 +1,24 @@
 from datetime import datetime
 
-from ..models import DateField, SearchKeyword, Vulnerability
-from .base import Source, SourceError
+from ..models import DateField, Vulnerability
+from .base import SourceError
+from .cn_common import WindowSource
 
 
-class CNVDSource(Source):
+class CNVDSource(WindowSource):
     """China National Vulnerability Database (cnvd.org.cn).
 
-    Placeholder: CNVD requires an authenticated session. Implement login +
-    search here (credentials via env vars) and flip `enabled`.
+    Run by CNCERT/CC. Needs a human-captured login session, and the site adds a
+    JavaScript anti-bot challenge, so the adapter may have to drive a headless
+    browser using the saved session. Details are confirmed in Phase 0 with
+    `scripts/cn_probe.py`; until then `implemented` stays False.
     """
 
     id = "cnvd"
     name = "CNVD (China)"
-    description = "Requires an authenticated session — coming soon"
-    requires_auth = True
+    site = "cnvd"
+    description = "China National Vulnerability Database (CNCERT/CC); needs a login session"
+    implemented = False
 
-    @property
-    def enabled(self) -> bool:
-        return False
-
-    async def search(
-        self, keyword: SearchKeyword, start: datetime, end: datetime, date_field: DateField
-    ) -> list[Vulnerability]:
-        raise SourceError("CNVD adapter is not implemented yet")
+    async def fetch_entries(self, start: datetime, end: datetime, date_field: DateField) -> list[Vulnerability]:
+        raise SourceError("CNVD parser not implemented yet (needs Phase 0 recordings)")

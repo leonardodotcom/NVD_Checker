@@ -4,8 +4,10 @@ A small web app that monitors vulnerability databases for **your own trigger wor
 **projects** (one per product or stack you care about), searches the selected sources over a time window, and
 aggregates the results into a single de-duplicated, sortable list that you can export to CSV.
 
-- **Sources:** NVD (NIST, CVE API 2.0). CNNVD and CNVD (China) appear in the UI as *coming soon*. Both need an
-  authenticated session, so each source is a predefined adapter in the backend rather than a free-form URL.
+- **Sources:** NVD (NIST, CVE API 2.0) works today. CNNVD and CNVD (China) are being added: they have no API and
+  need a login session captured by a person, so each source is a predefined adapter in the backend rather than a
+  free-form URL. The session tooling and aggregation are in place; the page parsers wait for the recordings
+  described in [DEPLOY.md](DEPLOY.md#11-chinese-databases-cnnvd--cnvd). Chinese trigger words work as typed.
 - **Time ranges:** last 24 h, 7 d, 30 d, 90 d, 6 months, 1 year, or a custom range of up to 3 years. You can filter
   on published or last-modified date.
 - **Aggregation:** every keyword is run against every selected source. Results are de-duplicated by CVE, and the

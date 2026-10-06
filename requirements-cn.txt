@@ -1,0 +1,5 @@
+# Optional: only needed to capture a login session for CNNVD/CNVD (and, if a
+# site's anti-bot challenge requires it, to scrape with a headless browser).
+# After installing run:  python -m playwright install chromium
+-r requirements.txt
+playwright>=1.45

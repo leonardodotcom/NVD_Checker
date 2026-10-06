@@ -39,6 +39,55 @@ def _sort_key(v: Vulnerability):
     return (-ts, SEVERITY_RANK.get(v.severity, 9), v.id)
 
 
+def _absorb(base: Vulnerability, other: Vulnerability) -> None:
+    """Fold `other` (same flaw reported by another source) into `base`."""
+    for source in other.sources or [other.source]:
+        if source not in base.sources:
+            base.sources.append(source)
+    for term in other.matched_keywords:
+        if term not in base.matched_keywords:
+            base.matched_keywords.append(term)
+    for alias in [other.id, *other.aliases]:
+        if alias.upper() != base.id.upper() and alias not in base.aliases:
+            base.aliases.append(alias)
+    for ref in other.references:
+        if ref not in base.references:
+            base.references.append(ref)
+    for cwe in other.cwe:
+        if cwe not in base.cwe:
+            base.cwe.append(cwe)
+    if not base.description:
+        base.description = other.description
+    if base.cvss_score is None and other.cvss_score is not None:
+        base.cvss_score, base.cvss_version = other.cvss_score, other.cvss_version
+    if base.severity == "UNKNOWN" and other.severity != "UNKNOWN":
+        base.severity = other.severity
+    if base.published is None:
+        base.published = other.published
+
+
+def merge_by_alias(entries: list[Vulnerability]) -> list[Vulnerability]:
+    """Merge entries that share an identifier (e.g. NVD CVE-2026-1 + CNNVD entry citing CVE-2026-1).
+
+    NVD entries go first so they stay the primary row (they carry CVSS and English text);
+    the other sources are recorded in `sources` and their ids in `aliases`.
+    """
+    groups: list[Vulnerability] = []
+    index: dict[str, int] = {}
+    for entry in sorted(entries, key=lambda e: e.source != "nvd"):
+        entry.sources = [entry.source]
+        ids = {entry.id.upper(), *(a.upper() for a in entry.aliases)}
+        hit = next((index[i] for i in ids if i in index), None)
+        if hit is None:
+            groups.append(entry)
+            hit = len(groups) - 1
+        else:
+            _absorb(groups[hit], entry)
+        for i in ids | {a.upper() for a in groups[hit].aliases}:
+            index.setdefault(i, hit)
+    return groups
+
+
 async def aggregate(
     sources: list[Source],
     keywords: list[SearchKeyword],
@@ -68,7 +117,7 @@ async def aggregate(
             else:
                 merged[key] = vuln
 
-    results = sorted(merged.values(), key=_sort_key)
+    results = sorted(merge_by_alias(list(merged.values())), key=_sort_key)
     by_keyword = Counter({k.term: 0 for k in keywords})
     for v in results:
         by_keyword.update(v.matched_keywords)

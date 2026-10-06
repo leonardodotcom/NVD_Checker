@@ -258,6 +258,7 @@ body.app {
 .sources label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; font-weight: var(--weight-medium); }
 .sources label.disabled { color: var(--color-text-muted); cursor: not-allowed; font-weight: var(--weight-regular); }
 .sources small { font-size: 11px; }
+.sources label.warn { color: var(--color-danger); }
 .range { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; }
 .custom-range { display: inline-flex; gap: var(--space-2); align-items: center; }
 .search-btn { height: 46px; padding: 0 var(--space-8); font-size: var(--text-lg); margin-left: auto; }

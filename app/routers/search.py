@@ -60,12 +60,13 @@ async def export_csv(req: SearchRequest):
     buf = io.StringIO()
     writer = csv.writer(buf)
     writer.writerow(
-        ["id", "source", "severity", "cvss_score", "cvss_version", "published",
+        ["id", "sources", "aliases", "severity", "cvss_score", "cvss_version", "published",
          "last_modified", "matched_keywords", "cwe", "url", "description"]
     )
     for v in resp.results:
         writer.writerow([
-            v.id, v.source, v.severity, v.cvss_score or "", v.cvss_version or "",
+            v.id, "; ".join(v.sources or [v.source]), "; ".join(v.aliases), v.severity,
+            v.cvss_score or "", v.cvss_version or "",
             v.published.isoformat() if v.published else "",
             v.last_modified.isoformat() if v.last_modified else "",
             "; ".join(v.matched_keywords), "; ".join(v.cwe), v.url or "", v.description,

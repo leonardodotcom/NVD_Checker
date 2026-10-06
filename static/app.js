@@ -234,13 +234,20 @@ async function removeKeyword(kid) {
 }
 
 // ---------- sources & search ----------
+function statusLabel(s) {
+  if (s.status === "login_required") return "login required";
+  if (s.status === "session_expired") return "session expired";
+  if (s.status === "not_implemented") return "coming soon";
+  return s.status_detail;
+}
+
 async function loadSources() {
   state.sources = await (await api("/api/sources")).json();
   const saved = (storeGet("sources") || "nvd").split(",");
   $("#source-list").innerHTML = state.sources
-    .map((s) => `<label class="${s.enabled ? "" : "disabled"}" title="${esc(s.description)}">
+    .map((s) => `<label class="${s.enabled ? "" : "disabled"} ${s.status === "session_expired" ? "warn" : ""}" title="${esc(s.status_detail || s.description)}">
         <input type="checkbox" value="${esc(s.id)}" ${s.enabled ? "" : "disabled"} ${s.enabled && saved.includes(s.id) ? "checked" : ""}>
-        ${esc(s.name)}${s.enabled ? "" : ` <small>(${s.requires_auth ? "requires login – " : ""}coming soon)</small>`}
+        ${esc(s.name)}${s.status_detail ? ` <small>${esc(s.status === "ready" ? s.status_detail : statusLabel(s))}</small>` : ""}
       </label>`)
     .join("");
 }
@@ -300,7 +307,7 @@ function showSkeleton() {
   $("#summary").innerHTML = Array.from({ length: 4 }, () =>
     '<div class="stat"><span class="skeleton w-40"></span><br><span class="skeleton w-80"></span></div>').join("");
   $("#keyword-counts").innerHTML = "";
-  const widths = ["w-60", "w-40", "w-40", "w-60", "w-80", "w-100"];
+  const widths = ["w-60", "w-40", "w-40", "w-40", "w-60", "w-80", "w-100"];
   $("#results-body").innerHTML = Array.from({ length: 6 }, () =>
     `<tr>${widths.map((w) => `<td><span class="skeleton ${w}"></span></td>`).join("")}</tr>`).join("");
 }
@@ -359,7 +366,9 @@ function renderResults() {
 
   $("#results-body").innerHTML = rows.length
     ? rows.map((v) => `<tr${state.animateRows ? ' class="row-in"' : ""}>
-        <td class="id"><a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.id)}</a></td>
+        <td class="id"><a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.id)}</a>
+          ${(v.aliases || []).map((a) => `<div><span class="tag mono">${esc(a)}</span></div>`).join("")}</td>
+        <td>${(v.sources && v.sources.length ? v.sources : [v.source]).map((s) => `<span class="src">${esc(s.toUpperCase())}</span>`).join(" ")}</td>
         <td><span class="sev sev-${esc(v.severity)}">${esc(v.severity)}</span></td>
         <td class="nowrap"><span class="score">${v.cvss_score ?? "–"}</span>${v.cvss_version ? ` <span class="text-muted">v${esc(v.cvss_version)}</span>` : ""}</td>
         <td class="nowrap">${v.published ? new Date(v.published).toLocaleDateString() : "–"}</td>
@@ -367,7 +376,7 @@ function renderResults() {
         <td class="desc"><div class="text" title="Click to expand">${esc(v.description)}</div>
           ${v.cwe.map((c) => `<span class="tag mono">${esc(c)}</span>`).join("")}</td>
       </tr>`).join("")
-    : `<tr class="empty-row"><td colspan="6">No vulnerabilities match — try a longer time range or more trigger words.</td></tr>`;
+    : `<tr class="empty-row"><td colspan="7">No vulnerabilities match — try a longer time range or more trigger words.</td></tr>`;
 }
 
 document.querySelectorAll("th[data-sort]").forEach((th) => th.addEventListener("click", () => {

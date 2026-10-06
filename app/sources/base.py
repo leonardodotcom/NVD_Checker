@@ -8,6 +8,13 @@ class SourceError(Exception):
     """Raised by an adapter when a query cannot be completed."""
 
 
+class SessionExpired(SourceError):
+    """The saved login session was rejected (login page, captcha, 401/403).
+
+    A human has to log in again (`python -m app.manage cn-login <site>`).
+    """
+
+
 class Source(ABC):
     """A vulnerability database the aggregator can query.
 
@@ -26,13 +33,20 @@ class Source(ABC):
     def enabled(self) -> bool:
         return True
 
+    def status(self) -> tuple[str, str]:
+        """(status, human-readable detail) shown next to the source in the UI."""
+        return ("ready", "") if self.enabled else ("not_implemented", "Not available")
+
     def info(self) -> SourceInfo:
+        status, detail = self.status()
         return SourceInfo(
             id=self.id,
             name=self.name,
             enabled=self.enabled,
             requires_auth=self.requires_auth,
             description=self.description,
+            status=status,
+            status_detail=detail,
         )
 
     @abstractmethod
